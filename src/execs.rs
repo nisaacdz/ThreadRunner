@@ -1,3 +1,7 @@
+///! This module contains ExecutorService and its helper types
+///! Worker and Msg are set to private
+///!
+
 use parking_lot::Mutex;
 
 /// Describes the tasks that can be passed through the channels in `ExecutorService`
@@ -35,7 +39,7 @@ impl ExecuterService {
     /// # Example
     ///
     /// ```
-    /// use thread_runner::ExecuterService;
+    /// use thread_runner::execs::ExecuterService;
     ///
     /// let service = ExecuterService::new(4);
     /// ```
@@ -62,7 +66,7 @@ impl ExecuterService {
     /// # Example
     ///
     /// ```
-    /// use thread_runner::ExecuterService;
+    /// use thread_runner::execs::ExecuterService;
     ///
     /// let service = ExecuterService::new(4);
     ///
@@ -129,7 +133,7 @@ impl Worker {
 }
 
 /// Represents a message that can be sent through the executor's channel.
-pub enum Msg {
+enum Msg {
     /// Instructs the worker to terminate its execution.
     Terminate,
     /// Represents a task to be executed by the worker.
