@@ -1,7 +1,7 @@
+use std::sync::mpsc::Receiver;
+
 ///! This module contains FixedThreadPool and its helper types
-///! Worker and Msg are set to private
-///!
-use parking_lot::Mutex;
+///
 
 /// Describes the tasks that can be passed through the channels in `FixedThreadPool`
 type Job = Box<dyn Send + 'static + Fn()>;
@@ -48,7 +48,7 @@ impl FixedThreadPool {
         assert_ne!(size, 0, "Executor service size must be non-zero");
         let (sender, receiver) = std::sync::mpsc::channel();
         let mut workers = Vec::with_capacity(size);
-        let receiver = std::sync::Arc::new(Mutex::new(receiver));
+        let receiver = Redex::new(receiver);
         for _ in 0..size {
             workers.push(Worker::new(receiver.clone()));
         }
@@ -120,10 +120,10 @@ impl Worker {
     /// This terminate message is useful for joining the individual `JoinHandle<()>` objects during `join` of `FixedThreadPool`
     ///
     /// Calling unwrap on `recv()` is safe in this case because the channel will never hang up
-    fn new(receiver: std::sync::Arc<Mutex<std::sync::mpsc::Receiver<Msg>>>) -> Self {
+    fn new(receiver: Redex<Receiver<Msg>>) -> Self {
         Self {
             thread: std::thread::spawn(move || loop {
-                let msg = receiver.lock().recv().unwrap();
+                let msg = receiver.recv().unwrap();
                 match msg {
                     Msg::Terminate => break,
                     Msg::Task(job) => job(),
@@ -140,3 +140,36 @@ enum Msg {
     /// Represents a task to be executed by the worker.
     Task(Job),
 }
+
+///
+///
+pub struct Redex<T> {
+    data: std::sync::Arc<T>,
+}
+
+impl<T> Clone for Redex<T> {
+    fn clone(&self) -> Self {
+        Self {
+            data: self.data.clone(),
+        }
+    }
+}
+
+impl<T> Redex<T> {
+    pub fn new(data: T) -> Self {
+        Self {
+            data: std::sync::Arc::new(data),
+        }
+    }
+}
+
+impl<T> std::ops::Deref for Redex<T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        self.data.as_ref()
+    }
+}
+
+unsafe impl<T> Sync for Redex<T> {}
+
+unsafe impl<T> Send for Redex<T> {}

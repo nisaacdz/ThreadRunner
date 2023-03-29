@@ -1,8 +1,8 @@
 [package]
-name = "thread_runner"
+name = "thread_runner_l"
 version = "0.2.0"
 edition = "2021"
-description = "A rust library for executing closures concurrently"
+description = "A rust library for executing tasks concurrently"
 license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

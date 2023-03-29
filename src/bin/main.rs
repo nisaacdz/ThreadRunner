@@ -1,4 +1,4 @@
-use thread_runner::execs::FixedThreadPool;
+use thread_runner_l::execs::FixedThreadPool;
 fn main() {
     let ex = FixedThreadPool::new(10);
 
