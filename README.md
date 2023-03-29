@@ -1,35 +1,35 @@
-# executors
+# ThreadRunner
 
-`executors` is a Rust library for executing closures concurrently using a pool of worker threads inspired by the java `ExecutorService` package. It currently contains:
+`thread_runner` is a Rust library for executing closures concurrently using a pool of worker threads inspired by the java `ExecutorService` package. It currently contains:
 - ExecutorService
 
 The main benefit is the guarantee that calls to `execute` and `join` will never panic.
 
 ## Installation
 
-You can use `executors` in your project by adding the following to your `Cargo.toml` file at the dependencies section:
+You can use `thread_runner` in your project by adding the following to your `Cargo.toml` file at the dependencies section:
 
-`executors = "0.1.0"`
+`thread_runner = "0.1.0"`
 
 ```
 [dependencies]
-executors = "0.1.0"
+thread_runner = "0.1.0"
 ```
 
 Alternatively you can run the following command in the project directory:
 ```
-cargo add executors
+cargo add thread_runner
 ```
 
-This will add the latest version of the "executors" package to your Cargo.toml file and download it to your local machine.
+This will add the latest version of the "thread_runner" to your Cargo.toml file and download it to your local machine.
 
 
 ## Usage
 
-To use `executors`, first create a new `ExecutorService` with a specified number of workers:
+To use `thread_runner`, first create a new `ExecuterService` with a specified number of workers:
 
 ```rust
-use executors::ExecutorService;
+use thread_runner::ExecutorService;
 
 let executor = ExecutorService::new(4); // create an executor with 4 worker threads
 ```
@@ -51,7 +51,7 @@ executor.join();
 # Example
 
 ```
-use executors::ExecutorService;
+use thread_runner::ExecutorService;
 
 let executor = ExecutorService::new(4); // create an executor with 4 worker threads
 

@@ -35,7 +35,7 @@ impl ExecuterService {
     /// # Example
     ///
     /// ```
-    /// use executors::ExecuterService;
+    /// use thread_runner::ExecuterService;
     ///
     /// let service = ExecuterService::new(4);
     /// ```
@@ -62,7 +62,7 @@ impl ExecuterService {
     /// # Example
     ///
     /// ```
-    /// use executors::ExecuterService;
+    /// use thread_runner::ExecuterService;
     ///
     /// let service = ExecuterService::new(4);
     ///
@@ -70,7 +70,7 @@ impl ExecuterService {
     ///     service.execute(move || println!("{}", val));
     /// }
     ///
-    /// service.join().unwrap();
+    /// service.join();
     /// ```
     ///
     /// # Panics

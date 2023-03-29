@@ -1,4 +1,4 @@
-use executors::ExecuterService;
+use thread_runner::ExecuterService;
 fn main() {
     let ex = ExecuterService::new(10);
 
