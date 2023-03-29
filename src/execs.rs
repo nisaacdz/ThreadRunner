@@ -1,11 +1,10 @@
-///! This module contains ExecutorService and its helper types
+///! This module contains FixedThreadPool and its helper types
 ///! Worker and Msg are set to private
 ///!
-
 use parking_lot::Mutex;
 
-/// Describes the tasks that can be passed through the channels in `ExecutorService`
-type Job = Box<dyn Send + 'static + Fn() -> ()>;
+/// Describes the tasks that can be passed through the channels in `FixedThreadPool`
+type Job = Box<dyn Send + 'static + Fn()>;
 
 /// sender is the `Sender` end of the channel used for passing tasks to the workers
 ///
@@ -13,13 +12,13 @@ type Job = Box<dyn Send + 'static + Fn() -> ()>;
 ///
 /// Each worker possesses a superficial clone of a single `Receiver` end that they borrow mutably through `parking_lot::Mutex` borrow
 
-pub struct ExecuterService {
+pub struct FixedThreadPool {
     sender: std::sync::mpsc::Sender<Msg>,
     workers: Vec<Worker>,
 }
 
-impl ExecuterService {
-    /// Creates a new executor service with the specified number of worker threads.
+impl FixedThreadPool {
+    /// Creates a new FixedThreadPool with the specified number of worker threads.
     ///
     /// The executor service will spawn `size` worker threads, each of which will
     /// process tasks submitted to the service using the `execute` method.
@@ -30,7 +29,7 @@ impl ExecuterService {
     ///
     /// # Returns
     ///
-    /// A new `ExecuterService` object.
+    /// A new `FixedThreadPool` object.
     ///
     /// # Panics
     ///
@@ -39,9 +38,9 @@ impl ExecuterService {
     /// # Example
     ///
     /// ```
-    /// use thread_runner::execs::ExecuterService;
+    /// use thread_runner::execs::FixedThreadPool;
     ///
-    /// let service = ExecuterService::new(4);
+    /// let executor = FixedThreadPool::new(4);
     /// ```
     ///
 
@@ -66,31 +65,27 @@ impl ExecuterService {
     /// # Example
     ///
     /// ```
-    /// use thread_runner::execs::ExecuterService;
+    /// use thread_runner::execs::FixedThreadPool;
     ///
-    /// let service = ExecuterService::new(4);
+    /// let executor = FixedThreadPool::new(4);
     ///
     /// for val in 0..1000 {
-    ///     service.execute(move || println!("{}", val));
+    ///     executor.execute(move || println!("{}", val));
     /// }
     ///
-    /// service.join();
+    /// executor.join();
     /// ```
-    ///
-    /// # Panics
-    ///
-    /// This method will panic if the send operation fails, which is unlikely to happen in practice.
     ///
     /// # Note
     ///
     /// If you want to wait for the submitted tasks to finish executing, you should call `join` on the executor service.
 
-    pub fn execute<F: Send + 'static + Fn() -> ()>(&self, f: F) {
+    pub fn execute<F: Send + 'static + Fn()>(&self, f: F) {
         let msg = Msg::Task(Box::new(f));
         self.sender.send(msg).unwrap()
     }
 
-    /// Suspends the current thread until the `ExecutorService` object completes all its executions
+    /// Blocks the current thread until the `FixedThreadPool` completes all its executions
     ///
     pub fn join(self) {
         for _ in 0..self.workers.len() {
@@ -99,6 +94,12 @@ impl ExecuterService {
 
         for Worker { thread } in self.workers {
             thread.join().unwrap();
+        }
+    }
+
+    pub fn terminate(&self) {
+        for worker in self.workers.iter() {
+            worker.thread.thread().unpark();
         }
     }
 }
@@ -116,7 +117,7 @@ struct Worker {
 impl Worker {
     /// New workers loop continuously in their own threads until they receive a Terminate message from the channel
     ///
-    /// This terminate message is useful for joining the individual `JoinHandle<()>` objects during `join` of `ExecutorService`
+    /// This terminate message is useful for joining the individual `JoinHandle<()>` objects during `join` of `FixedThreadPool`
     ///
     /// Calling unwrap on `recv()` is safe in this case because the channel will never hang up
     fn new(receiver: std::sync::Arc<Mutex<std::sync::mpsc::Receiver<Msg>>>) -> Self {

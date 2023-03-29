@@ -1,6 +1,6 @@
-use thread_runner::execs::ExecuterService;
+use thread_runner::execs::FixedThreadPool;
 fn main() {
-    let ex = ExecuterService::new(10);
+    let ex = FixedThreadPool::new(10);
 
     for _ in 0..100 {
         ex.execute(|| do_something());
