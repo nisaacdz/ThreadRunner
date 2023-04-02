@@ -1,17 +1,11 @@
-use thread_runner_l::execs::FixedThreadPool;
+use thread_runner::{AsyncFlavor, AsyncRuntime};
+
 fn main() {
-    let ex = FixedThreadPool::new(10);
-
-    for _ in 0..100 {
-        ex.execute(|| do_something());
-    }
-
-    ex.join();
+    let runtime = AsyncRuntime::new(AsyncFlavor::AllThreads);
+    let res = runtime.poll(charge());
+    println!("{}", res)
 }
 
-fn do_something() {
-    for i in 0..10 {
-        print!("value = {}; ", i);
-    }
-    println!()
+pub async fn charge() -> i32 {
+    2
 }

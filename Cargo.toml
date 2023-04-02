@@ -1,5 +1,5 @@
 [package]
-name = "thread_runner_l"
+name = "thread_runner"
 version = "0.2.0"
 edition = "2021"
 description = "A rust library for executing tasks concurrently"
@@ -8,4 +8,4 @@ license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-parking_lot = "0.12.1"
+tokio = { version = "1.27.0", features = ["rt", "rt-multi-thread"] }

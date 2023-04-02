@@ -4,7 +4,7 @@ use std::sync::mpsc::Receiver;
 ///
 
 /// Describes the tasks that can be passed through the channels in `FixedThreadPool`
-type Job = Box<dyn Send + 'static + Fn()>;
+type Job = Box<dyn Send + 'static + FnOnce()>;
 
 /// sender is the `Sender` end of the channel used for passing tasks to the workers
 ///
@@ -12,13 +12,13 @@ type Job = Box<dyn Send + 'static + Fn()>;
 ///
 /// Each worker possesses a superficial clone of a single `Receiver` end that they borrow mutably through `parking_lot::Mutex` borrow
 
-pub struct FixedThreadPool {
+pub struct ThreadPool {
     sender: std::sync::mpsc::Sender<Msg>,
     workers: Vec<Worker>,
 }
 
-impl FixedThreadPool {
-    /// Creates a new FixedThreadPool with the specified number of worker threads.
+impl ThreadPool {
+    /// Creates a new ThreadPool with the specified number of worker threads.
     ///
     /// The executor service will spawn `size` worker threads, each of which will
     /// process tasks submitted to the service using the `execute` method.
@@ -38,14 +38,16 @@ impl FixedThreadPool {
     /// # Example
     ///
     /// ```
-    /// use thread_runner::execs::FixedThreadPool;
+    /// use thread_runner::ThreadPool;
     ///
-    /// let executor = FixedThreadPool::new(4);
+    /// let executor = ThreadPool::new(4);
+    /// // execute some tasks
+    /// executor.join();
     /// ```
     ///
 
     pub fn new(size: usize) -> Self {
-        assert_ne!(size, 0, "Executor service size must be non-zero");
+        assert_ne!(size, 0, "Cannot create 0-sized thread pool");
         let (sender, receiver) = std::sync::mpsc::channel();
         let mut workers = Vec::with_capacity(size);
         let receiver = Redex::new(receiver);
@@ -65,11 +67,11 @@ impl FixedThreadPool {
     /// # Example
     ///
     /// ```
-    /// use thread_runner::execs::FixedThreadPool;
+    /// use thread_runner::ThreadPool;
     ///
-    /// let executor = FixedThreadPool::new(4);
+    /// let executor = ThreadPool::new(4);
     ///
-    /// for val in 0..1000 {
+    /// for val in 0..10 {
     ///     executor.execute(move || println!("{}", val));
     /// }
     ///
@@ -80,12 +82,12 @@ impl FixedThreadPool {
     ///
     /// If you want to wait for the submitted tasks to finish executing, you should call `join` on the executor service.
 
-    pub fn execute<F: Send + 'static + Fn()>(&self, f: F) {
+    pub fn execute<F: Send + 'static + FnOnce()>(&self, f: F) {
         let msg = Msg::Task(Box::new(f));
         self.sender.send(msg).unwrap()
     }
 
-    /// Blocks the current thread until the `FixedThreadPool` completes all its executions
+    /// Blocks the current thread until the `ThreadPool` completes all its executions
     ///
     pub fn join(self) {
         for _ in 0..self.workers.len() {
@@ -117,7 +119,7 @@ struct Worker {
 impl Worker {
     /// New workers loop continuously in their own threads until they receive a Terminate message from the channel
     ///
-    /// This terminate message is useful for joining the individual `JoinHandle<()>` objects during `join` of `FixedThreadPool`
+    /// This terminate message is useful for joining the individual `JoinHandle<()>` objects during `join` of `ThreadPool`
     ///
     /// Calling unwrap on `recv()` is safe in this case because the channel will never hang up
     fn new(receiver: Redex<Receiver<Msg>>) -> Self {
