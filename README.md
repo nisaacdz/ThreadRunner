@@ -1,70 +1,90 @@
 # ThreadRunner
 
-`thread_runner` is a Rust library for executing closures concurrently using a pool of worker threads inspired by the java `ExecutorService` package. It currently contains:
-- execs:
-A module containing the ExecutorService
+ThreadRunner is a Rust library for executing tasks concurrently.
 
-The main benefit is the guarantee that calls to `execute` and `join` will never panic.
+It currently contains:
 
-## Installation
+- **ThreadPool:** Use a pool of threads to handle expensive computations.
+
+
+- **AsyncRuntime:** Seemlessly integrate async code into your synchronous code.
+
+# Installation
 
 You can use `thread_runner` in your project by adding the following to your `Cargo.toml` file at the dependencies section:
 
-`thread_runner = "0.1.0"`
+`thread_runner = "0.2.0"`
 
 ```
 [dependencies]
-thread_runner = "0.1.0"
+thread_runner = "0.2.0"
 ```
 
 Alternatively you can run the following command in the project directory:
+
 ```
 cargo add thread_runner
 ```
 
-This will add the latest version of the "thread_runner" to your Cargo.toml file and download it to your local machine.
+This will add the latest version of the "thread_runner" to your Cargo.toml file
 
 
 ## Usage
 
-To use the `ExecuterService`, import it from the `execs` module and initialize it with a specified number of workers:
 
-```rust
-use thread_runner::execs::ExecutorService;
+This crate contains module, struct and function level documentations to help you
+understand how various features employed within it work and how to use them
 
-let executor = ExecutorService::new(4); // create an executor with 4 worker threads
-```
+# Example 1
 
-Then, submit closures to the executor using the execute method:
+    use thread_runner::ThreadPool;
 
-```
-executor.execute(|| {
-    // closure to execute concurrently
-});
-```
+    let executor = ThreadPool::new(4);
 
-To wait for all submitted closures to finish executing, call the join method:
+    for val in 0..10 {
+        executor.execute(move || println!("{}", val));
+    }
+    executor.join();
 
-```
-executor.join();
-```
+# Example 2
 
-# Example
+    use thread_runner::{AsyncRuntime, AsyncFlavor};
+    use std::time::Duration;
 
-```
-use thread_runner::execs::ExecutorService;
+    let rt = AsyncRuntime::new(AsyncFlavor::CurrentThread);
 
-let executor = ExecutorService::new(4); // create an executor with 4 worker threads
-
-for val in 0..1000 {
-    executor.execute(move || {
-        println!("{}", val);
+    // Spawn a future on the runtime.
+    rt.execute(async {
+         // Do some asynchronous work here...
     });
-}
 
-executor.join();
+    // Poll a future on the runtime and block until it completes.
+    let result = rt.poll(async {
+        // Do some asynchronous work here and return a value...
+        42
+    });
 
-```
+    // Shut down the runtime after a specified timeout duration.
+    rt.terminate(Duration::from_secs(1));
+
+
+
+# Contributing
+
+All contributions and suggestions are gladly welcome. Here are a few ways you can contribute:
+
+- **Issue:** Report a bug or suggest an improvement by creating an issue.
+
+- **Pull request:** Propose changes to the codebase by creating a pull request.
+
+- **Documentation:** Contribute to documentation to help users understand how to use the software.
+
+- **Testing:** Test the software and report any bugs or issues you find.
+
+All contributions, large or small, are valuable and appreciated. Thank you for your interest in contributing to this project!
+
+
 
 # License
+
 This project is licensed under the MIT License - see the LICENSE file for details.
